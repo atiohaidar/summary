@@ -1,0 +1,5 @@
+transformers
+torch
+rouge-score
+datasets
+psutil
