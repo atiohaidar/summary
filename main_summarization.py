@@ -52,8 +52,14 @@ if __name__ == "__main__":
         # Pilih subset jika user memilih hanya beberapa data
         if n_samples is not None:
             dataset = list(dataset)[:n_samples]
+        else:
+            dataset = list(dataset)
 
-        references = [sample['summary'] for sample in dataset]
+        if not dataset:
+            print(f"Skipping {dataset_name}: dataset kosong")
+            continue
+
+        references = [sample['references'] for sample in dataset]
 
         # Bertsum
         print(f"\n--- Bertsum (Extractive) for {dataset_name} ---")

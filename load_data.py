@@ -1,4 +1,5 @@
 import os
+import re
 from datasets import Dataset
 
 def load_multiple_datasets(base_path="/workspaces/summary/Dataset"):
@@ -19,48 +20,62 @@ def load_multiple_datasets(base_path="/workspaces/summary/Dataset"):
         data = []
         
         # Load gold summaries
-        gold_files = sorted([f for f in os.listdir(gold_summaries_path) if f.endswith('.txt')])
+        gold_files = [f for f in os.listdir(gold_summaries_path) if f.endswith('.txt')]
         summaries = {}
         for file in gold_files:
             topic = file.split('_')[0]  # e.g., T1 from T1_1.txt
             with open(os.path.join(gold_summaries_path, file), 'r', encoding='utf-8') as f:
                 summary = f.read().strip()
-            if topic not in summaries:
-                summaries[topic] = []
-            summaries[topic].append(summary)
-        
-        # Combine summaries per topic
+            summaries.setdefault(topic, []).append(summary)
+
+        if not summaries:
+            print(f"Skipping {duc_folder}: No gold summaries found")
+            continue
+
+        topic_prefix = re.match(r'^[A-Za-z]+', next(iter(summaries.keys()))).group()
+
+        # Prepare mapping topic -> raw folder using numeric alignment (e.g., T1 -> D0601A)
+        raw_subfolders = [f for f in os.listdir(raw_data_path) if os.path.isdir(os.path.join(raw_data_path, f))]
+        folder_map = {}
+        for folder in raw_subfolders:
+            match = re.search(r'(\d+)', folder)
+            if not match:
+                continue
+            folder_number = int(match.group())
+            base = (folder_number // 100) * 100
+            topic_index = folder_number - base
+            topic_name = f"{topic_prefix}{topic_index}"
+            folder_map[topic_name] = folder
+
+        missing_topics = [topic for topic in summaries.keys() if topic not in folder_map]
+        if missing_topics:
+            print(f"Warning: {duc_folder} missing raw folders for topics: {missing_topics}")
+
+        # Combine summaries per topic and align with correct raw data folder
         for topic, sum_list in summaries.items():
-            combined_summary = ' '.join(sum_list)  # Simple concatenation
-            
-            # Map topic to raw data folder (e.g., T1 -> D0601A, but check existing folders)
-            raw_subfolders = [f for f in os.listdir(raw_data_path) if os.path.isdir(os.path.join(raw_data_path, f))]
-            # For simplicity, assume first subfolder or map based on topic
-            # In DUC2006, T1 uses D0601A, T2 might use another
-            topic_folder = None
-            if topic == 'T1' and 'D0601A' in raw_subfolders:
-                topic_folder = 'D0601A'
-            elif topic == 'T2' and 'D0601A' in raw_subfolders:  # Adjust as needed
-                topic_folder = 'D0601A'
-            else:
-                # If no specific mapping, skip or use first available
-                if raw_subfolders:
-                    topic_folder = raw_subfolders[0]  # Fallback
-            
-            if topic_folder:
-                raw_path = os.path.join(raw_data_path, topic_folder)
-                articles = []
-                for file in sorted(os.listdir(raw_path)):
-                    with open(os.path.join(raw_path, file), 'r', encoding='utf-8') as f:
-                        articles.append(f.read().strip())
-                combined_article = ' '.join(articles)  # Use all articles, not just 5
-                
-                data.append({
-                    'dataset': duc_folder,
-                    'topic': topic,
-                    'article': combined_article,
-                    'summary': combined_summary
-                })
+            topic_folder = folder_map.get(topic)
+            if not topic_folder:
+                continue
+
+            raw_path = os.path.join(raw_data_path, topic_folder)
+            articles = []
+            for file in sorted(os.listdir(raw_path)):
+                file_path = os.path.join(raw_path, file)
+                if not os.path.isfile(file_path):
+                    continue
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    articles.append(f.read().strip())
+            if not articles:
+                continue
+
+            combined_article = ' '.join(articles)
+
+            data.append({
+                'dataset': duc_folder,
+                'topic': topic,
+                'article': combined_article,
+                'references': sum_list
+            })
         
         datasets[duc_folder] = Dataset.from_list(data)
         print(f"Loaded {len(data)} samples for {duc_folder}")

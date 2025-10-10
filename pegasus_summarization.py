@@ -20,18 +20,29 @@ def pegasus_summarize(dataset):
         print(f"Generated Summary: {summary}\n")
     return summaries
 
-def evaluate_rouge(predictions, references):
+def evaluate_rouge(predictions, reference_lists):
     scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeLsum'], use_stemmer=True)
     scores = []
-    for pred, ref in zip(predictions, references):
-        score = scorer.score(ref, pred)
-        scores.append(score)
+    for pred, references in zip(predictions, reference_lists):
+        if not references:
+            continue
+        best_score = None
+        for ref in references:
+            score = scorer.score(ref, pred)
+            if best_score is None:
+                best_score = score
+            else:
+                for metric in score:
+                    if score[metric].fmeasure > best_score[metric].fmeasure:
+                        best_score[metric] = score[metric]
+        if best_score is not None:
+            scores.append(best_score)
     return scores
 
 if __name__ == "__main__":
     dataset = load_duc2006_data()
     pegasus_summaries = pegasus_summarize(dataset)
-    references = [sample['summary'] for sample in dataset]
+    references = [sample['references'] for sample in dataset]
 
     rouge_scores = evaluate_rouge(pegasus_summaries, references)
 
