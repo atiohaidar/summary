@@ -3,3 +3,4 @@ torch
 rouge-score
 datasets
 psutil
+bert-extractive-summarizer
