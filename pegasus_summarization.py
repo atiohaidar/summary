@@ -1,14 +1,23 @@
 from transformers import pipeline
 from load_data import load_duc2006_data
 from rouge_score import rouge_scorer
+import psutil
 
 def pegasus_summarize(dataset):
     summarizer = pipeline("summarization", model="google/pegasus-xsum")
     summaries = []
-    for sample in dataset:
+    for idx, sample in enumerate(dataset):
+        print(f"[Pegasus] Memproses sample ke-{idx+1} dari {len(dataset)}...")
         article = sample['article'][:1024]  # Limit length for Pegasus
+        print(f"Article length (chars): {len(article)}")
+        # Log CPU and RAM usage
+        cpu_percent = psutil.cpu_percent(interval=1)
+        ram = psutil.virtual_memory()
+        print(f"[Resource] CPU Usage: {cpu_percent}% | RAM Usage: {ram.percent}%")
         summary = summarizer(article, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
+        print(f"Generated summary length (chars): {len(summary)}")
         summaries.append(summary)
+        print(f"Generated Summary: {summary}\n")
     return summaries
 
 def evaluate_rouge(predictions, references):

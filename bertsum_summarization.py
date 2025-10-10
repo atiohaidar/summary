@@ -5,7 +5,8 @@ from rouge_score import rouge_scorer
 def bertsum_summarize(dataset):
     model = Summarizer('distilbert-base-uncased')
     summaries = []
-    for sample in dataset:
+    for idx, sample in enumerate(dataset):
+        print(f"[Bertsum] Memproses sample ke-{idx+1} dari {len(dataset)}...")
         article = sample['article']
         summary = model(article, ratio=0.3)  # Extract 30% of sentences
         summaries.append(summary)

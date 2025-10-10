@@ -1,7 +1,7 @@
 import os
 from datasets import Dataset
 
-def load_multiple_datasets(base_path="/workspaces/summary"):
+def load_multiple_datasets(base_path="/workspaces/summary/Dataset"):
     datasets = {}
     
     # Detect all DUC folders (e.g., DUC2006, DUC2007)
