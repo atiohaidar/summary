@@ -10,14 +10,14 @@ def save_results(dataset_name, model_name, summaries, scores, avg_scores, result
         for i, summary in enumerate(summaries):
             f.write(f"Sample {i+1}:\n{summary}\n\n")
     with open(os.path.join(result_dir, f'{dataset_name}_{model_name}_scores.txt'), 'w') as f:
-        f.write(f"Average ROUGE-1: {avg_scores['rouge1']:.4f}\n")
-        f.write(f"Average ROUGE-2: {avg_scores['rouge2']:.4f}\n")
-        f.write(f"Average ROUGE-L: {avg_scores['rougeLsum']:.4f}\n\n")
+        f.write(f"Average ROUGE-1 F1: {avg_scores['rouge-1']:.4f}\n")
+        f.write(f"Average ROUGE-2 F1: {avg_scores['rouge-2']:.4f}\n")
+        f.write(f"Average ROUGE-SU4 F1: {avg_scores['rouge-su4']:.4f}\n\n")
         for i, score in enumerate(scores):
             f.write(f"Sample {i+1}:\n")
-            f.write(f"ROUGE-1: {score['rouge1'].fmeasure:.4f}\n")
-            f.write(f"ROUGE-2: {score['rouge2'].fmeasure:.4f}\n")
-            f.write(f"ROUGE-L: {score['rougeLsum'].fmeasure:.4f}\n\n")
+            f.write(f"ROUGE-1 F1: {score['rouge-1']['f']:.4f}\n")
+            f.write(f"ROUGE-2 F1: {score['rouge-2']['f']:.4f}\n")
+            f.write(f"ROUGE-SU4 F1: {score['rouge-su4']['f']:.4f}\n\n")
 
 if __name__ == "__main__":
     all_datasets = load_multiple_datasets()
@@ -67,14 +67,14 @@ if __name__ == "__main__":
         bertsum_scores = evaluate_rouge_bertsum(bertsum_summaries, references)
 
         bertsum_avg = {
-            'rouge1': sum(s['rouge1'].fmeasure for s in bertsum_scores) / len(bertsum_scores),
-            'rouge2': sum(s['rouge2'].fmeasure for s in bertsum_scores) / len(bertsum_scores),
-            'rougeLsum': sum(s['rougeLsum'].fmeasure for s in bertsum_scores) / len(bertsum_scores)
+            'rouge-1': sum(s['rouge-1']['f'] for s in bertsum_scores) / len(bertsum_scores),
+            'rouge-2': sum(s['rouge-2']['f'] for s in bertsum_scores) / len(bertsum_scores),
+            'rouge-su4': sum(s['rouge-su4']['f'] for s in bertsum_scores) / len(bertsum_scores)
         }
 
-        print(f"Average ROUGE-1: {bertsum_avg['rouge1']:.4f}")
-        print(f"Average ROUGE-2: {bertsum_avg['rouge2']:.4f}")
-        print(f"Average ROUGE-L: {bertsum_avg['rougeLsum']:.4f}")
+        print(f"Average ROUGE-1 F1: {bertsum_avg['rouge-1']:.4f}")
+        print(f"Average ROUGE-2 F1: {bertsum_avg['rouge-2']:.4f}")
+        print(f"Average ROUGE-SU4 F1: {bertsum_avg['rouge-su4']:.4f}")
 
         save_results(dataset_name, 'bertsum', bertsum_summaries, bertsum_scores, bertsum_avg, result_dir)
         overall_bertsum_scores.extend(bertsum_scores)
@@ -85,14 +85,14 @@ if __name__ == "__main__":
         pegasus_scores = evaluate_rouge_pegasus(pegasus_summaries, references)
 
         pegasus_avg = {
-            'rouge1': sum(s['rouge1'].fmeasure for s in pegasus_scores) / len(pegasus_scores),
-            'rouge2': sum(s['rouge2'].fmeasure for s in pegasus_scores) / len(pegasus_scores),
-            'rougeLsum': sum(s['rougeLsum'].fmeasure for s in pegasus_scores) / len(pegasus_scores)
+            'rouge-1': sum(s['rouge-1']['f'] for s in pegasus_scores) / len(pegasus_scores),
+            'rouge-2': sum(s['rouge-2']['f'] for s in pegasus_scores) / len(pegasus_scores),
+            'rouge-su4': sum(s['rouge-su4']['f'] for s in pegasus_scores) / len(pegasus_scores)
         }
 
-        print(f"Average ROUGE-1: {pegasus_avg['rouge1']:.4f}")
-        print(f"Average ROUGE-2: {pegasus_avg['rouge2']:.4f}")
-        print(f"Average ROUGE-L: {pegasus_avg['rougeLsum']:.4f}")
+        print(f"Average ROUGE-1 F1: {pegasus_avg['rouge-1']:.4f}")
+        print(f"Average ROUGE-2 F1: {pegasus_avg['rouge-2']:.4f}")
+        print(f"Average ROUGE-SU4 F1: {pegasus_avg['rouge-su4']:.4f}")
 
         save_results(dataset_name, 'pegasus', pegasus_summaries, pegasus_scores, pegasus_avg, result_dir)
         overall_pegasus_scores.extend(pegasus_scores)
@@ -101,26 +101,26 @@ if __name__ == "__main__":
     print("\n=== Overall Summary ===")
     if len(overall_bertsum_scores) > 0:
         overall_bertsum_avg = {
-            'rouge1': sum(s['rouge1'].fmeasure for s in overall_bertsum_scores) / len(overall_bertsum_scores),
-            'rouge2': sum(s['rouge2'].fmeasure for s in overall_bertsum_scores) / len(overall_bertsum_scores),
-            'rougeLsum': sum(s['rougeLsum'].fmeasure for s in overall_bertsum_scores) / len(overall_bertsum_scores)
+            'rouge-1': sum(s['rouge-1']['f'] for s in overall_bertsum_scores) / len(overall_bertsum_scores),
+            'rouge-2': sum(s['rouge-2']['f'] for s in overall_bertsum_scores) / len(overall_bertsum_scores),
+            'rouge-su4': sum(s['rouge-su4']['f'] for s in overall_bertsum_scores) / len(overall_bertsum_scores)
         }
-        print("Overall Bertsum average ROUGE-1:", overall_bertsum_avg['rouge1'])
-        print("Overall Bertsum average ROUGE-2:", overall_bertsum_avg['rouge2'])
-        print("Overall Bertsum average ROUGE-L:", overall_bertsum_avg['rougeLsum'])
+        print("Overall Bertsum average ROUGE-1 F1:", overall_bertsum_avg['rouge-1'])
+        print("Overall Bertsum average ROUGE-2 F1:", overall_bertsum_avg['rouge-2'])
+        print("Overall Bertsum average ROUGE-SU4 F1:", overall_bertsum_avg['rouge-su4'])
     else:
         overall_bertsum_avg = None
         print("Tidak ada skor Bertsum yang dihitung.")
 
     if len(overall_pegasus_scores) > 0:
         overall_pegasus_avg = {
-            'rouge1': sum(s['rouge1'].fmeasure for s in overall_pegasus_scores) / len(overall_pegasus_scores),
-            'rouge2': sum(s['rouge2'].fmeasure for s in overall_pegasus_scores) / len(overall_pegasus_scores),
-            'rougeLsum': sum(s['rougeLsum'].fmeasure for s in overall_pegasus_scores) / len(overall_pegasus_scores)
+            'rouge-1': sum(s['rouge-1']['f'] for s in overall_pegasus_scores) / len(overall_pegasus_scores),
+            'rouge-2': sum(s['rouge-2']['f'] for s in overall_pegasus_scores) / len(overall_pegasus_scores),
+            'rouge-su4': sum(s['rouge-su4']['f'] for s in overall_pegasus_scores) / len(overall_pegasus_scores)
         }
-        print("Overall Pegasus average ROUGE-1:", overall_pegasus_avg['rouge1'])
-        print("Overall Pegasus average ROUGE-2:", overall_pegasus_avg['rouge2'])
-        print("Overall Pegasus average ROUGE-L:", overall_pegasus_avg['rougeLsum'])
+        print("Overall Pegasus average ROUGE-1 F1:", overall_pegasus_avg['rouge-1'])
+        print("Overall Pegasus average ROUGE-2 F1:", overall_pegasus_avg['rouge-2'])
+        print("Overall Pegasus average ROUGE-SU4 F1:", overall_pegasus_avg['rouge-su4'])
     else:
         overall_pegasus_avg = None
         print("Tidak ada skor Pegasus yang dihitung.")
@@ -128,14 +128,14 @@ if __name__ == "__main__":
     # Save overall results
     with open(os.path.join(result_dir, 'overall_summary.txt'), 'w') as f:
         if overall_bertsum_avg:
-            f.write("Overall Bertsum average ROUGE-1: {:.4f}\n".format(overall_bertsum_avg['rouge1']))
-            f.write("Overall Bertsum average ROUGE-2: {:.4f}\n".format(overall_bertsum_avg['rouge2']))
-            f.write("Overall Bertsum average ROUGE-L: {:.4f}\n".format(overall_bertsum_avg['rougeLsum']))
+            f.write("Overall Bertsum average ROUGE-1 F1: {:.4f}\n".format(overall_bertsum_avg['rouge-1']))
+            f.write("Overall Bertsum average ROUGE-2 F1: {:.4f}\n".format(overall_bertsum_avg['rouge-2']))
+            f.write("Overall Bertsum average ROUGE-SU4 F1: {:.4f}\n".format(overall_bertsum_avg['rouge-su4']))
         else:
             f.write("Tidak ada skor Bertsum yang dihitung.\n")
         if overall_pegasus_avg:
-            f.write("Overall Pegasus average ROUGE-1: {:.4f}\n".format(overall_pegasus_avg['rouge1']))
-            f.write("Overall Pegasus average ROUGE-2: {:.4f}\n".format(overall_pegasus_avg['rouge2']))
-            f.write("Overall Pegasus average ROUGE-L: {:.4f}\n".format(overall_pegasus_avg['rougeLsum']))
+            f.write("Overall Pegasus average ROUGE-1 F1: {:.4f}\n".format(overall_pegasus_avg['rouge-1']))
+            f.write("Overall Pegasus average ROUGE-2 F1: {:.4f}\n".format(overall_pegasus_avg['rouge-2']))
+            f.write("Overall Pegasus average ROUGE-SU4 F1: {:.4f}\n".format(overall_pegasus_avg['rouge-su4']))
         else:
             f.write("Tidak ada skor Pegasus yang dihitung.\n")

@@ -1,8 +1,8 @@
 transformers
 torch
-rouge-score
 datasets
 psutil
 bert-extractive-summarizer
 tiktoken
 protobuf
+rouge-metric

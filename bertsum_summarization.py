@@ -1,6 +1,6 @@
 from summarizer import Summarizer
 from load_data import load_duc2006_data
-from rouge_score import rouge_scorer
+from rouge_metric import PyRouge
 
 def bertsum_summarize(dataset):
     model = Summarizer('distilbert-base-uncased')
@@ -13,22 +13,17 @@ def bertsum_summarize(dataset):
     return summaries
 
 def evaluate_rouge(predictions, reference_lists):
-    scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeLsum'], use_stemmer=True)
+    # Initialize PyRouge for ROUGE1, ROUGE2, and ROUGE SU4
+    rouge = PyRouge(rouge_n=(1, 2), rouge_su=True, skip_gap=4, multi_ref_mode='best', alpha=0.5)
     scores = []
     for pred, references in zip(predictions, reference_lists):
         if not references:
             continue
-        best_score = None
-        for ref in references:
-            score = scorer.score(ref, pred)
-            if best_score is None:
-                best_score = score
-            else:
-                for metric in score:
-                    if score[metric].fmeasure > best_score[metric].fmeasure:
-                        best_score[metric] = score[metric]
-        if best_score is not None:
-            scores.append(best_score)
+        # Evaluate with multiple references
+        hypotheses = [pred]
+        multi_references = [references]
+        score = rouge.evaluate(hypotheses, multi_references)
+        scores.append(score)
     return scores
 
 if __name__ == "__main__":
@@ -41,7 +36,7 @@ if __name__ == "__main__":
     for i, score in enumerate(rouge_scores):
         print(f"Sample {i+1}:")
         print(f"Bertsum Summary: {bertsum_summaries[i]}")
-        print(f"ROUGE-1: {score['rouge1'].fmeasure:.4f}")
-        print(f"ROUGE-2: {score['rouge2'].fmeasure:.4f}")
-        print(f"ROUGE-L: {score['rougeLsum'].fmeasure:.4f}")
+        print(f"ROUGE-1 F1: {score['rouge-1']['f']:.4f}")
+        print(f"ROUGE-2 F1: {score['rouge-2']['f']:.4f}")
+        print(f"ROUGE-SU4 F1: {score['rouge-su4']['f']:.4f}")
         print("-" * 50)
