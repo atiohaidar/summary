@@ -1,13 +1,25 @@
 import os
 import csv
+import re
 
 def extract_text_from_doc(file_path):
-    with open(file_path, 'r') as f:
-        content = f.read()
-    start = content.find('<TEXT>') + len('<TEXT>')
-    end = content.find('</TEXT>', start)
-    text = content[start:end].strip()
-    return text
+    """Membaca file, mengekstrak teks dari dalam tag <TEXT>, dan membersihkan tag HTML."""
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+    except Exception as e:
+        print(f"Error reading file {file_path}: {e}")
+        return ""
+
+    # Ekstrak konten di antara <TEXT> dan </TEXT>
+    match = re.search(r'<TEXT>(.*?)</TEXT>', content, re.DOTALL)
+    if not match:
+        return ""
+    text = match.group(1)
+    # Hapus semua tag HTML/XML (seperti <P>) dan ganti dengan spasi
+    cleaned_text = re.sub(r'<[^>]+>', ' ', text)
+    # Ganti beberapa spasi/newline menjadi satu spasi dan rapikan
+    return ' '.join(cleaned_text.split())
 
 def get_folder_name_duc2006(topic_num):
     letter = chr(64 + ((topic_num - 1) % 9) + 1)
@@ -37,7 +49,7 @@ def create_csv_for_dataset(dataset_path, output_file, dataset='DUC2006'):
     topic_prefix = 'T' if dataset == 'DUC2006' else 'S'
     with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['id', 'article', 'highlight'])
+        writer.writerow(['id', 'article', 'highlights'])
         for topic_num in range(1, num_topics + 1):
             content = get_content_for_topic(dataset_path, topic_num, dataset)
             summary_dir = os.path.join(dataset_path, 'gold_summaries')
@@ -52,11 +64,11 @@ def create_csv_for_dataset(dataset_path, output_file, dataset='DUC2006'):
 
 def main():
     # For DUC2006
-    duc2006_path = '/workspaces/summary/Dataset/DUC2006'
+    duc2006_path = './Dataset/DUC2006'
     create_csv_for_dataset(duc2006_path, 'duc2006.csv', 'DUC2006')
     
     # For DUC2007
-    duc2007_path = '/workspaces/summary/Dataset/DUC2007'
+    duc2007_path = './Dataset/DUC2007'
     create_csv_for_dataset(duc2007_path, 'duc2007.csv', 'DUC2007')
 
 if __name__ == '__main__':
