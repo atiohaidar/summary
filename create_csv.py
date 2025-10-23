@@ -57,7 +57,7 @@ def create_csv_for_dataset(dataset_path, output_file, dataset='DUC2006'):
             for file_name in os.listdir(summary_dir):
                 if file_name.startswith('{}{}_'.format(topic_prefix, topic_num)) and file_name.endswith('.txt'):
                     summary_path = os.path.join(summary_dir, file_name)
-                    with open(summary_path, 'r', encoding='utf-8') as f:
+                    with open(summary_path, 'r', encoding='utf-8', errors='ignore') as f:
                         summaries.append(f.read().strip())
             combined_summary = ' '.join(summaries)
             writer.writerow(['{}{}'.format(topic_prefix, topic_num), content, combined_summary])
